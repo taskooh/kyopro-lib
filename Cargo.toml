@@ -2,6 +2,10 @@
 name = "kyopro-lib"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+repository = "https://github.com/taskooh/kyopro-lib"
+keywords = ["competitive"]
+categories = ["algorithms", "data-structures"]
 
 [dependencies]
 num-traits = "0.2.15"
