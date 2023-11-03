@@ -1,23 +1,13 @@
-use std::{cmp::max, sync::Mutex};
+use std::cmp::max;
 
 use kyopro_lib::{Rerooting, RerootingData};
 use proconio::input;
-
-// create global variables d: Vec<i64>.
-lazy_static::lazy_static! {
-    static ref D: Mutex<Vec<i64>> = Mutex::new(vec![]);
-}
 
 fn main() {
     input! {
         n: usize,
         a_b_c: [(usize, usize, i64); n-1],
-        d_input: [i64; n],
-    }
-    // set global variables D <- d_input.
-    {
-        let mut d = D.lock().unwrap();
-        *d = d_input;
+        d: [i64; n],
     }
     let a_b_c = a_b_c
         .iter()
@@ -28,32 +18,34 @@ fn main() {
         g[a].push((b, c));
         g[b].push((a, c));
     }
-    let mut rr = Rerooting::<MyRerootingData>::new_from_graph_with_cost(g);
+    let rerooting_data = MyRerootingData { d };
+    let mut rr = Rerooting::new_from_graph_with_cost(g, rerooting_data);
     let ans = rr.run(0);
     for i in 0..n {
         println!("{}", ans[i]);
     }
 }
-struct MyRerootingData;
+struct MyRerootingData {
+    d: Vec<i64>,
+}
 
 impl RerootingData for MyRerootingData {
     type Cost = i64;
     type Data = i64;
 
-    fn merge(first: i64, second: i64) -> i64 {
+    fn merge(&self, first: i64, second: i64) -> i64 {
         max(first, second)
     }
 
-    fn apply(value: i64, current: usize, _parent: usize, cost: i64) -> i64 {
-        let d = D.lock().unwrap();
-        max(value, d[current]) + cost
+    fn apply(&self, value: i64, current: usize, _parent: usize, cost: i64) -> i64 {
+        max(value, self.d[current]) + cost
     }
 
-    fn leaf() -> i64 {
+    fn leaf(&self) -> i64 {
         0
     }
 
-    fn e() -> i64 {
+    fn e(&self) -> i64 {
         0
     }
 }
