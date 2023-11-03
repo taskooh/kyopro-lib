@@ -5,7 +5,7 @@ pub trait RerootingData {
     fn merge(first: Self::Data, second: Self::Data) -> Self::Data;
     // how to use children information to update current node.
     fn apply(value: Self::Data, index: usize, parent: usize, cost: Self::Cost) -> Self::Data;
-    // e() is identity element of merge. 
+    // e() is identity element of merge.
     // merge(a,e()) = merge(e(),a) = a
     fn e() -> Self::Data;
     fn leaf() -> Self::Data;
@@ -23,7 +23,11 @@ impl<T: RerootingData> Rerooting<T> {
         let n = g.len();
         let g2 = g
             .iter()
-            .map(|v| v.iter().map(|&j| (j, <T::Cost as num_traits::One>::one())).collect::<Vec<_>>())
+            .map(|v| {
+                v.iter()
+                    .map(|&j| (j, <T::Cost as num_traits::One>::one()))
+                    .collect::<Vec<_>>()
+            })
             .collect::<Vec<_>>();
         Self {
             n,
@@ -100,7 +104,6 @@ impl<T: RerootingData> Rerooting<T> {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use std::cmp::max;
@@ -131,13 +134,8 @@ mod test {
         //    1   2
         //   /
         //  3
-        let g = vec![
-            vec![1, 2],
-            vec![0, 3],
-            vec![0],
-            vec![1],
-        ];
-        
+        let g = vec![vec![1, 2], vec![0, 3], vec![0], vec![1]];
+
         let mut rerooting = Rerooting::<Data>::new_from_graph(g);
         let ans = rerooting.run(0);
         assert_eq!(ans, vec![2, 2, 3, 3]);
