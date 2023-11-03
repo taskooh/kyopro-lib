@@ -70,3 +70,6 @@ superslice = "=1.0.0"
 tap = "=1.0.1"
 text_io = "=0.1.12"
 varisat = "=0.2.2"
+
+[features]
+test_bin = []
