@@ -15,9 +15,10 @@ pub fn test_bin(example_name: &str, in_out_filenames: Vec<&str>) {
     for filename in in_out_filenames {
         let input_path = format!("{}/{}.txt", input_dir, filename);
         let output_path = format!("{}/{}.txt", output_dir, filename);
-        let input_data = fs::read(&input_path).expect(format!("Failed to read input file: {}",&input_path).as_str());
-        let expected_output =
-            fs::read_to_string(&output_path).expect(format!("Failed to read output file: {}",&output_path).as_str());
+        let input_data = fs::read(&input_path)
+            .expect(format!("Failed to read input file: {}", &input_path).as_str());
+        let expected_output = fs::read_to_string(&output_path)
+            .expect(format!("Failed to read output file: {}", &output_path).as_str());
         let mut child = Command::new(&bin_path)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
