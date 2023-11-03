@@ -2,13 +2,14 @@ pub trait RerootingData {
     type Cost: Copy + num_traits::One;
     type Data: Copy;
 
-    fn merge(first: Self::Data, second: Self::Data) -> Self::Data;
+    fn merge(&self, first: Self::Data, second: Self::Data) -> Self::Data;
     // how to use children information to update current node.
-    fn apply(value: Self::Data, index: usize, parent: usize, cost: Self::Cost) -> Self::Data;
+    fn apply(&self, value: Self::Data, index: usize, parent: usize, cost: Self::Cost)
+        -> Self::Data;
     // e() is identity element of merge.
     // merge(a,e()) = merge(e(),a) = a
-    fn e() -> Self::Data;
-    fn leaf() -> Self::Data;
+    fn e(&self) -> Self::Data;
+    fn leaf(&self) -> Self::Data;
 }
 
 pub struct Rerooting<T: RerootingData> {
@@ -16,10 +17,11 @@ pub struct Rerooting<T: RerootingData> {
     g: Vec<Vec<(usize, T::Cost)>>,
     memo: Vec<T::Data>,
     ans: Vec<T::Data>,
+    d: T,
 }
 
 impl<T: RerootingData> Rerooting<T> {
-    pub fn new_from_graph(g: Vec<Vec<usize>>) -> Self {
+    pub fn new_from_graph(g: Vec<Vec<usize>>, d: T) -> Self {
         let n = g.len();
         let g2 = g
             .iter()
@@ -32,18 +34,20 @@ impl<T: RerootingData> Rerooting<T> {
         Self {
             n,
             g: g2,
-            memo: vec![T::e(); n],
-            ans: vec![T::e(); n],
+            memo: vec![d.e(); n],
+            ans: vec![d.e(); n],
+            d,
         }
     }
 
-    pub fn new_from_graph_with_cost(g: Vec<Vec<(usize, T::Cost)>>) -> Self {
+    pub fn new_from_graph_with_cost(g: Vec<Vec<(usize, T::Cost)>>, d: T) -> Self {
         let n = g.len();
         Self {
             n,
             g,
-            memo: vec![T::e(); n],
-            ans: vec![T::e(); n],
+            memo: vec![d.e(); n],
+            ans: vec![d.e(); n],
+            d,
         }
     }
 
@@ -55,13 +59,13 @@ impl<T: RerootingData> Rerooting<T> {
             }
             self.dfs1(next, current);
             upd = true;
-            self.memo[current] = T::merge(
+            self.memo[current] = self.d.merge(
                 self.memo[current],
-                T::apply(self.memo[next], next, current, next_cost),
+                self.d.apply(self.memo[next], next, current, next_cost),
             )
         }
         if !upd {
-            self.memo[current] = T::leaf();
+            self.memo[current] = self.d.leaf();
         }
     }
 
@@ -71,17 +75,17 @@ impl<T: RerootingData> Rerooting<T> {
             if next == parent {
                 to_child.push(v);
             } else {
-                to_child.push(T::apply(self.memo[next], next, current, next_cost));
+                to_child.push(self.d.apply(self.memo[next], next, current, next_cost));
             }
         }
         // 先頭と末尾からの累積merge
-        let mut head = vec![T::e(); to_child.len() + 1];
-        let mut tail = vec![T::e(); to_child.len() + 1];
+        let mut head = vec![self.d.e(); to_child.len() + 1];
+        let mut tail = vec![self.d.e(); to_child.len() + 1];
         for i in 0..to_child.len() {
-            head[i + 1] = T::merge(head[i], to_child[i]);
+            head[i + 1] = self.d.merge(head[i], to_child[i]);
         }
         for i in (0..to_child.len()).rev() {
-            tail[i] = T::merge(tail[i + 1], to_child[i]);
+            tail[i] = self.d.merge(tail[i + 1], to_child[i]);
         }
         self.ans[current] = *head.last().unwrap();
         // 自身のindexを除いたものをmerge
@@ -90,16 +94,20 @@ impl<T: RerootingData> Rerooting<T> {
             if next == parent {
                 continue;
             }
-            let next_v = T::merge(head[i], tail[i + 1]);
-            self.dfs2(next, current, T::apply(next_v, current, next, next_cost));
+            let next_v = self.d.merge(head[i], tail[i + 1]);
+            self.dfs2(
+                next,
+                current,
+                self.d.apply(next_v, current, next, next_cost),
+            );
         }
     }
 
     pub fn run(&mut self, start: usize) -> Vec<T::Data> {
-        self.memo = vec![T::e(); self.n];
-        self.ans = vec![T::e(); self.n];
+        self.memo = vec![self.d.e(); self.n];
+        self.ans = vec![self.d.e(); self.n];
         self.dfs1(start, self.n);
-        self.dfs2(start, self.n, T::e());
+        self.dfs2(start, self.n, self.d.e());
         return self.ans.clone();
     }
 }
@@ -116,16 +124,16 @@ mod test {
         impl RerootingData for Data {
             type Cost = usize;
             type Data = usize;
-            fn merge(first: Self::Data, second: Self::Data) -> Self::Data {
+            fn merge(&self, first: Self::Data, second: Self::Data) -> Self::Data {
                 max(first, second)
             }
-            fn apply(value: Self::Data, _: usize, _: usize, cost: Self::Cost) -> Self::Data {
+            fn apply(&self, value: Self::Data, _: usize, _: usize, cost: Self::Cost) -> Self::Data {
                 value + cost
             }
-            fn e() -> Self::Data {
+            fn e(&self) -> Self::Data {
                 0
             }
-            fn leaf() -> Self::Data {
+            fn leaf(&self) -> Self::Data {
                 0
             }
         }
@@ -135,8 +143,7 @@ mod test {
         //   /
         //  3
         let g = vec![vec![1, 2], vec![0, 3], vec![0], vec![1]];
-
-        let mut rerooting = Rerooting::<Data>::new_from_graph(g);
+        let mut rerooting = Rerooting::new_from_graph(g, Data {});
         let ans = rerooting.run(0);
         assert_eq!(ans, vec![2, 2, 3, 3]);
     }

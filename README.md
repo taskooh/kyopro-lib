@@ -9,5 +9,5 @@ cargo add kyopro-lib --git https://github.com/taskooh/kyopro-lib
 or write in Cargo.toml dependencies:
 
 ```toml
-kyopro-lib = { git = "https://github.com/taskooh/kyopro-lib", version = "0.1.1" }
+kyopro-lib = { git = "https://github.com/taskooh/kyopro-lib", version = "0.2.0" }
 ```
