@@ -26,7 +26,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Build examples
-        run: cargo build --release --example
+        run: cargo build --release --examples
 
       - name: Run tests with features
         run: cargo test --features test_bin
