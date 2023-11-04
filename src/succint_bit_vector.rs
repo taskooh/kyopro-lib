@@ -80,22 +80,50 @@ impl SuccintBitVectorTrait for SuccintBitVector {
     /// if there is no b, return None
     /// if i is out of range, return None
     /// TODO: optimize
+    // fn select(&self, b: bool, i: usize) -> Option<usize> {
+    //     let mut left = 0;
+    //     let mut right = self.original_vec.len();
+    //     while left < right{
+    //         let mid = (left + right) / 2;
+    //         if self.rank(b, mid + 1) < i + 1 {
+    //             left = mid + 1;
+    //         } else {
+    //             right = mid;
+    //         }
+    //     }
+    //     if right == self.original_vec.len() {
+    //         None
+    //     } else {
+    //         Some(left)
+    //     }
+    // }
     fn select(&self, b: bool, i: usize) -> Option<usize> {
-        let mut left = 0;
-        let mut right = self.original_vec.len();
-        while left < right{
-            let mid = (left + right) / 2;
-            if self.rank(b, mid + 1) < i + 1 {
-                left = mid + 1;
+        let rank = i + 1;
+        let mut large_left = 0;
+        let mut large_right = self.large_vec.len();
+        while large_left < large_right {
+            let large_mid = (large_left + large_right) / 2;
+            if self.large_vec[large_mid] <= rank {
+                large_left = large_mid + 1;
             } else {
-                right = mid;
+                large_right = large_mid;
             }
         }
-        if right == self.original_vec.len() {
-            None
-        } else {
-            Some(left)
+        let large_index = large_right - 1;
+        let small_rank_left = (rank - self.large_vec[large_index]) as u16;
+        let mut small_left = large_index * Self::LEVEL_LARGE / Self::LEVEL_SMALL;
+        let mut small_right = small_left + Self::LEVEL_LARGE / Self::LEVEL_SMALL;
+        while small_left < small_right {
+            let small_mid = (small_left + small_right) / 2;
+            if self.small_vec[small_mid] <= small_rank_left as u16 {
+                small_left = small_mid + 1;
+            } else {
+                small_right = small_mid;
+            }
         }
+        let small_index = small_right - 1;
+        // Todo
+        return None;
     }    
 }
 
